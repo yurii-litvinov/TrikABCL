@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(ros_node_example)
+
 ## Set @result to list of all @curdir subdirectories which contain <include> folder and set them to @result
 MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
@@ -37,11 +38,21 @@ FOREACH(subdir ${TRIK_SUBDIRS})
   LIST(APPEND TRIK_INCLUDE_DIRS ${TRIK_DIR}/${subdir}/include)
 ENDFOREACH()
 
-## Build talker and listener
+## Set Qt directory
+SET(QT_DIR /opt/trik-sdk/sysroots/arm926ejste-oe-linux-gnueabi/usr/include/qt4/)
+
+## Find all Qt subdirectories
+FILE(GLOB children RELATIVE ${QT_DIR} ${QT_DIR}/*)
+SET(QT_INCLUDE_DIRS "")
+FOREACH(child ${children})
+  LIST(APPEND QT_INCLUDE_DIRS ${QT_DIR}/${child})
+ENDFOREACH()
+
 include_directories(include 
 	${catkin_INCLUDE_DIRS} 
 	${TRIK_INCLUDE_DIRS}
-	/opt/trik-sdk/sysroots/arm926ejste-oe-linux-gnueabi/usr/include/qt4
+        ${QT_DIR}
+	${QT_INCLUDE_DIRS}
 )
 
 link_directories(${TRIK_DIR}/bin/arm-release/)
