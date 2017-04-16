@@ -33,7 +33,7 @@ int main(int argc,char* argv[])
 
         ros.RosPublishMotorSpeed(desiredLeftMotorSpeed, desiredRightMotorSpeed);
 
-        ros::spinOnce();
+        ros.RosSpinning();
         usleep(5000);
     }
     ros.RosClose();

@@ -50,6 +50,7 @@ class Ros {
         void RosSubscribers(bool SubTime, bool SubSensor);
         void RosPublishers(bool SubLeftMotor, bool SubRightMotor);
         void RosPublishMotorSpeed(float LeftMotorSpeed, float RightMotorSpeed);
+        void RosSpinning(int mode);
 
     private:
         std::string leftMotorTopic;
@@ -125,3 +126,13 @@ void Ros::RosPublishMotorSpeed(float LeftMotorSpeed, float RightMotorSpeed) {
     }
 }
 
+void Ros::RosSpinning(int mode = 1) {
+    switch(mode) {
+    case 0:
+        ros::spin();
+        break;
+    case 1:
+        ros::spinOnce();
+        break;
+    }
+}

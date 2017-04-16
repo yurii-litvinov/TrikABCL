@@ -1,0 +1,92 @@
+    function setLeftMotorVelocity_cb(msg)
+    -- Left motor speed subscriber callback
+    simSetJointTargetVelocity(leftMotor,msg.data)
+end
+
+function setRightMotorVelocity_cb(msg)
+    -- Right motor speed subscriber callback
+    simSetJointTargetVelocity(rightMotor,msg.data)
+end
+
+function getTransformStamped(objHandle,name,relTo,relToName)
+    t=simGetSystemTime()
+    p=simGetObjectPosition(objHandle,relTo)
+    o=simGetObjectQuaternion(objHandle,relTo)
+    return {
+        header={
+            stamp=t,
+            frame_id=relToName
+        },
+        child_frame_id=name,
+        transform={
+            translation={x=p[1],y=p[2],z=p[3]},
+            rotation={x=o[1],y=o[2],z=o[3],w=o[4]}
+        }
+    }
+end
+
+if (sim_call_type==sim_childscriptcall_initialization) then
+    robotHandle=simGetObjectAssociatedWithScript(sim_handle_self)
+    leftMotor=simGetObjectHandle("Pioneer_p3dx_leftMotor") -- Handle of the left motor
+    rightMotor=simGetObjectHandle("Pioneer_p3dx_rightMotor") -- Handle of the right motor
+  
+
+    -- Check if the required ROS plugin is there:
+    moduleName=0
+    moduleVersion=0
+    index=0
+    pluginNotFound=true
+    while moduleName do
+        moduleName,moduleVersion=simGetModuleName(index)
+        if (moduleName=='RosInterface') then
+            pluginNotFound=false
+        end
+        index=index+1
+    end
+
+    -- Add a banner:
+    if (pluginNotFound) then
+        bannerText="I cannot run! (I couldn't find my RosInterface plugin)"
+    else
+        bannerText="I am controlled via a ROS node and the RosInterface! ('rosBubbleRob2' controlls me)"
+    end
+    black={0,0,0,0,0,0,0,0,0,0,0,0}
+    red={0,0,0,0,0,0,0,0,0,1,0.2,0.2}
+    simAddBanner(bannerText,0,sim_banner_bitmapfont+sim_banner_overlay,nil,simGetObjectAssociatedWithScript(sim_handle_self),black,red)
+
+    -- Ok now launch the ROS client application:
+    if (not pluginNotFound) then
+        local sysTime=simGetSystemTimeInMs(-1) 
+        local leftMotorTopicName='leftMotorSpeed'..sysTime -- we add a random component so that we can have several instances of this robot running
+        local rightMotorTopicName='rightMotorSpeed'..sysTime -- we add a random component so that we can have several instances of this robot running
+        
+        local simulationTimeTopicName='simTime'..sysTime -- we add a random component so that we can have several instances of this robot running
+
+        -- Prepare the sensor publisher and the motor speed subscribers:
+        
+        simTimePub=simExtRosInterface_advertise('/'..simulationTimeTopicName,'std_msgs/Float32')
+        leftMotorSub=simExtRosInterface_subscribe('/'..leftMotorTopicName,'std_msgs/Float32','setLeftMotorVelocity_cb')
+        rightMotorSub=simExtRosInterface_subscribe('/'..rightMotorTopicName,'std_msgs/Float32','setRightMotorVelocity_cb')
+
+        -- Now we start the client application:
+        result=simLaunchExecutable('testRos',leftMotorTopicName.." "..rightMotorTopicName.." "..simulationTimeTopicName,0)
+    end
+end
+
+if (sim_call_type==sim_childscriptcall_actuation) then
+    -- Send an updated sensor and simulation time message, and send the transform of the robot:
+    if not pluginNotFound then
+        simExtRosInterface_publish(simTimePub,{data=simGetSimulationTime()})
+        -- Send the robot's transform:
+        simExtRosInterface_sendTransform(getTransformStamped(robotHandle,'rosInterfaceControlledBubbleRob',-1,'world'))
+        -- To send several transforms at once, use simExtRosInterface_sendTransforms instead
+    end
+end
+
+if (sim_call_type==sim_childscriptcall_cleanup) then
+    if not pluginNotFound then
+        -- Following not really needed in a simulation script (i.e. automatically shut down at simulation end):
+        simExtRosInterface_shutdownSubscriber(leftMotorSub)
+        simExtRosInterface_shutdownSubscriber(rightMotorSub)
+    end
+end
