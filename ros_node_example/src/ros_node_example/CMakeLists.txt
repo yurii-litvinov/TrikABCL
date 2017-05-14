@@ -39,7 +39,7 @@ FOREACH(subdir ${TRIK_SUBDIRS})
 ENDFOREACH()
 
 ## Set Qt directory
-SET(QT_DIR /opt/trik-sdk/sysroots/arm926ejste-oe-linux-gnueabi/usr/include/qt4/)
+SET(QT_DIR /opt/trik-sdk/sysroots/arm926ejste-oe-linux-gnueabi/usr/include/qt5/)
 
 ## Find all Qt subdirectories
 FILE(GLOB children RELATIVE ${QT_DIR} ${QT_DIR}/*)
@@ -51,14 +51,14 @@ ENDFOREACH()
 include_directories(include 
 	${catkin_INCLUDE_DIRS} 
 	${TRIK_INCLUDE_DIRS}
-        ${QT_DIR}
+	${QT_DIR}
 	${QT_INCLUDE_DIRS}
 )
 
 link_directories(${TRIK_DIR}/bin/arm-release/)
 
 add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES} trikControl QtCore QtGui)
+target_link_libraries(talker ${catkin_LIBRARIES} trikControl Qt5Core)
 add_dependencies(talker beginner_tutorials_generate_messages_cpp)
 
 add_executable(listener src/listener.cpp)
