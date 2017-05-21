@@ -1,0 +1,16 @@
+package StaticObjectsProtobuf;
+
+message Point {
+  required int32 x = 1;
+  required int32 y = 2;
+}
+
+message Wall {
+  required Point beginning = 1;
+  required Point end = 2;
+}
+
+message StaticObjects {
+  repeated Wall walls = 1;
+  repeated Point points = 2;
+}
