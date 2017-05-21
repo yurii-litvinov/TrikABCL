@@ -3,7 +3,9 @@ project(ssl_vision)
 
 set(CMAKE_CXX_STANDARD 11)
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
-find_package(Protobuf REQUIRED)
+
+ADD_SUBDIRECTORY(src/protobuf)
+
 catkin_package()
 set(CMAKE_AUTOMOC ON)
 message("CMAKE_CROSSCOMPILING " ${CMAKE_CROSSCOMPILING})
@@ -32,7 +34,7 @@ if(${CMAKE_CROSSCOMPILING})
     ENDFOREACH()
 
     ## Set Qt directory
-    SET(QT_DIR /opt/trik-sdk/sysroots/arm926ejse-oe-linux-gnueabi/usr/include/qt5/)
+    SET(QT_DIR ${TRIK_SDK_ROOT}/sysroots/arm926ejse-oe-linux-gnueabi/usr/include/qt5/)
 
     ## Find all Qt subdirectories
     FILE(GLOB children RELATIVE ${QT_DIR} ${QT_DIR}/*)
@@ -48,22 +50,19 @@ if(${CMAKE_CROSSCOMPILING})
             ${QT_INCLUDE_DIRS}
             ${PROTOBUF_INCLUDE_DIRS}
             src/staticObjectsPlugin
-            src/protobuf
+            ${CMAKE_BINARY_DIR}/ssl_vision/src/protobuf
             src)
 
     link_directories(${TRIK_DIR}/bin/arm-release/)
 
     add_executable(ssl_listener
-            src/sslClient.cpp
-            src/protobuf/messages_robocup_ssl_detection.pb.cc
-            src/protobuf/messages_robocup_ssl_geometry.pb.cc
-            src/protobuf/messages_robocup_ssl_refbox_log.pb.cc
-            src/protobuf/messages_robocup_ssl_wrapper.pb.cc
-            src/protobuf/messages_robocup_ssl_static_objects.pb.cc)
+            src/sslClient.cpp)
+
     target_link_libraries(ssl_listener
             Qt5Core
             ${catkin_LIBRARIES}
             trikControl
+            proto
             ${PROTOBUF_LIBRARY})
 
 else(${CMAKE_CROSSCOMPILING})
@@ -79,7 +78,7 @@ else(${CMAKE_CROSSCOMPILING})
             ${catkin_INCLUDE_DIRS}
             ${PROTOBUF_INCLUDE_DIRS}
             src/staticObjectsPlugin
-            src/protobuf
+            ${CMAKE_BINARY_DIR}/ssl_vision/src/protobuf
             src)
 
     add_executable(sslServer src/sslServer.cpp)
@@ -88,16 +87,12 @@ else(${CMAKE_CROSSCOMPILING})
             Qt5::Widgets)
 
     add_executable(sslClient
-            src/sslClient.cpp
-            src/protobuf/messages_robocup_ssl_detection.pb.cc
-            src/protobuf/messages_robocup_ssl_geometry.pb.cc
-            src/protobuf/messages_robocup_ssl_refbox_log.pb.cc
-            src/protobuf/messages_robocup_ssl_wrapper.pb.cc
-            src/protobuf/messages_robocup_ssl_static_objects.pb.cc)
+            src/sslClient.cpp)
     target_link_libraries(sslClient
             ${catkin_LIBRARIES}
             ${QT_LIBRARIES}
             ${PROTOBUF_LIBRARY}
+            proto
             Qt5::Core)
 
     add_executable(staticObjectsServer
@@ -108,6 +103,5 @@ else(${CMAKE_CROSSCOMPILING})
             ${QT_LIBRARIES}
             Qt5::Core
             Qt5::Network
-            Qt5::Widgets
-            )
+            Qt5::Widgets)
 endif(${CMAKE_CROSSCOMPILING})

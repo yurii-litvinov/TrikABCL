@@ -3,11 +3,11 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
-#include "protobuf/messages_robocup_ssl_detection.pb.h"
-#include "protobuf/messages_robocup_ssl_geometry.pb.h"
-#include "protobuf/messages_robocup_ssl_refbox_log.pb.h"
-#include "protobuf/messages_robocup_ssl_wrapper.pb.h"
-#include "protobuf/messages_robocup_ssl_static_objects.pb.h"
+#include "messages_robocup_ssl_detection.pb.h"
+#include "messages_robocup_ssl_geometry.pb.h"
+#include "messages_robocup_ssl_refbox_log.pb.h"
+#include "messages_robocup_ssl_wrapper.pb.h"
+#include "messages_robocup_ssl_static_objects.pb.h"
 
 void sslCallback(const std_msgs::String::ConstPtr &msg) {
     SSL_WrapperPacket wp;

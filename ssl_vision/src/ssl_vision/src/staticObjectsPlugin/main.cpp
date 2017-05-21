@@ -1,8 +1,6 @@
 #include <QtCore/qglobal.h>
 #include <QObject>
 #include <QtNetwork>
-
-
 #include <QtWidgets/QApplication>
 
 #include "staticObjectsServer.h"
