@@ -2,8 +2,10 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
+#include "std_msgs/Float32MultiArray.h"
 #include <vector>
 #include "libRobot.h"
+#include <cmath>
 
 enum RESULT {
     OK ,
@@ -17,6 +19,11 @@ unsigned int currentTime_updatedByTopicSubscriber=0;
 struct timeval tv;
 vector<Robot> robotVector;
 int indexRobot = 0;
+float accelX  = 0;
+float accelY = 0;
+float gyro = 0;
+double angle = 0;
+double positionRobot[3];
 
 RESULT RosInit(std::string nodeName) {
     int _argc = 0;
@@ -29,13 +36,11 @@ RESULT RosInit(std::string nodeName) {
     return OK;
 }
 
-void simulationTimeCallback(const std_msgs::Float32& simTime)
-{
+void simulationTimeCallback(const std_msgs::Float32& simTime) {
     simulationTime=simTime.data;
 }
 
-void sensorCallback(const std_msgs::Bool& sensTrigger)
-{
+void sensorCallback(const std_msgs::Bool& sensTrigger) {
     if (gettimeofday(&tv,NULL)==0)
         currentTime_updatedByTopicSubscriber=tv.tv_sec;
     robotVector[indexRobot].sensorTrigger=sensTrigger.data;
@@ -50,6 +55,29 @@ void encoderRightCallback(const std_msgs::Float32& encVal) {
     if (gettimeofday(&tv,NULL)==0)
         currentTime_updatedByTopicSubscriber=tv.tv_sec;
     robotVector[indexRobot].rightMotorEncoder = CalculationEncodert(robotVector[indexRobot].rightStepEncoder, encVal.data, robotVector[indexRobot].flagEncoder.second);
+}
+
+void accelCallback(const std_msgs::Float32MultiArray& accelVal) {
+
+    if (gettimeofday(&tv,NULL)==0)
+        currentTime_updatedByTopicSubscriber=tv.tv_sec;
+    accelX += asin(accelVal.data[0]/ 9.8);
+}
+
+void gyroCallback(const std_msgs::Float32MultiArray& gyroVal) {
+
+    if (gettimeofday(&tv,NULL)==0)
+        currentTime_updatedByTopicSubscriber=tv.tv_sec;
+    gyro = gyroVal.data[0];
+}
+
+void robotCallback(const std_msgs::Float32MultiArray& robotVal) {
+    if (gettimeofday(&tv,NULL)==0)
+        currentTime_updatedByTopicSubscriber=tv.tv_sec;
+   positionRobot[0] = robotVal.data[0];
+   positionRobot[1] = robotVal.data[1];
+   positionRobot[2] = robotVal.data[2];
+  // cout << "pos: " << positionRobot[0] << ' ' << positionRobot[1] << ' ' << positionRobot[2] << endl;
 }
 
 class Ros {
@@ -74,12 +102,18 @@ class Ros {
         std::string simulationTimeTopic;
         std::string leftMotorEncoderTopic;
         std::string rightMotorEncoderTopic;
+        std::string accelTopic;
+        std::string gyroTopic;
+        std::string robotTopic;
 
         ros::NodeHandle node;
         ros::Subscriber subSensor;
         ros::Subscriber subSimulationTime;
         ros::Subscriber subLeftEncoder;
         ros::Subscriber subRightEncoder;
+        ros::Subscriber subAccel;
+        ros::Subscriber subGyro;
+        ros::Subscriber subRobot;
 
         ros::Publisher leftMotorSpeedPub;
         ros::Publisher rightMotorSpeedPub;
@@ -87,12 +121,15 @@ class Ros {
 
 RESULT Ros::RosConfig(int argc, char * argv[]) {
     switch (argc) {
-        case 6: {
+        case 9: {
             leftMotorTopic = "/" + (string) argv[1];
             rightMotorTopic = "/" + (string) argv[2];
             simulationTimeTopic = "/" + (string) argv[3];
             leftMotorEncoderTopic = "/" + (string) argv[4];
             rightMotorEncoderTopic = "/" + (string) argv[5];
+            accelTopic = "/" + (string) argv[6];
+            gyroTopic = "/" + (string) argv[7];
+            robotTopic = "/" + (string) argv[8];
         }
         break;
         default: {
@@ -132,6 +169,9 @@ void Ros::RosSubscribers(bool SubTime = false, bool SubSensor = false, bool SubL
     if (SubRightEncoder) {
         subRightEncoder=node.subscribe(rightMotorEncoderTopic.c_str(),1,encoderRightCallback);
     }
+    subAccel = node.subscribe(accelTopic.c_str(),1, accelCallback);
+    subGyro = node.subscribe(gyroTopic.c_str(),1, gyroCallback);
+    subRobot = node.subscribe(robotTopic.c_str(),1, robotCallback);
 }
 
 void Ros::RosPublishers(bool SubLeftMotor = false, bool SubRightMotor = false) {
@@ -165,3 +205,4 @@ void Ros::RosSpinning(int mode = 1) {
         break;
     }
 }
+
